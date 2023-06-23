@@ -11,6 +11,8 @@ const App = () => {
     confirmPassword: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   const inputs = [
     {
       id: 1,
@@ -57,17 +59,47 @@ const App = () => {
       placeholder: "Confirm Password",
       errorMessage: "Passwords don't match!",
       label: "Confirm Password",
-      pattern: values.password,
+      pattern: `^${values.password}$`,
       required: true,
     },
   ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const validationErrors = {};
+    inputs.forEach((input) => {
+      if (input.required && !values[input.name]) {
+        validationErrors[input.name] = "This field is required.";
+      } else if (input.pattern && !RegExp(input.pattern).test(values[input.name])) {
+        validationErrors[input.name] = input.errorMessage;
+      }
+    });
+
+    if (values.password !== values.confirmPassword) {
+      validationErrors.confirmPassword = "Passwords don't match!";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    localStorage.setItem("formData", JSON.stringify(values));
+    setValues({
+      username: "",
+      email: "",
+      birthday: "",
+      password: "",
+      confirmPassword: "",
+    });
+    setErrors({});
   };
 
   const onChange = (e) => {
-    setValues({ ...values, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setValues((prevValues) => ({ ...prevValues, [name]: value }));
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
   };
 
   return (
@@ -80,6 +112,7 @@ const App = () => {
             {...input}
             value={values[input.name]}
             onChange={onChange}
+            error={errors[input.name]}
           />
         ))}
         <button>Submit</button>
